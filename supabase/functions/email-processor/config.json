@@ -1,0 +1,7 @@
+{
+  "name": "email-processor",
+  "version": "1.0.0",
+  "description": "Edge Function para processamento de email",
+  "entrypoint": "index.ts",
+  "verify_jwt": true
+} 

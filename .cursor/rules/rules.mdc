@@ -1,0 +1,52 @@
+---
+description: Estabelece as regras e diretrizes para o desenvolvimento do nosso sistema de gerenciamento e automação de email, com foco em boas práticas, padrões de codificação e trabalho eficiente com assistentes de IA.
+globs: 
+alwaysApply: false
+---
+# Diretrizes de Desenvolvimento do Sistema de Email
+
+## 📋 Princípios Gerais para Desenvolvimento com IA
+
+### Gerenciamento de Projeto
+- **Utilizar arquivos markdown para organização do projeto**: Manter atualizados `TASK.md`
+
+### Código e Arquitetura
+- **Manter arquivos com menos de 500 linhas**: Dividir em módulos quando necessário
+- **Organizar código em módulos claramente separados**: Agrupar por funcionalidade ou responsabilidade
+
+## 🔄 Consciência de Projeto e Contexto
+
+- **Verificar `TASK.md`** antes de iniciar uma nova tarefa. Se a tarefa não estiver listada, adicioná-la com uma breve descrição
+
+## 🧱 Estrutura de Código e Modularidade
+
+- **Manter clara separação entre frontend e backend**:
+
+## 🧪 Testes e Confiabilidade
+
+- **Criar testes para novos recursos** (funções, componentes, rotas, etc.)
+- **Após atualizar qualquer lógica**, verificar se os testes existentes precisam ser atualizados
+- **Os testes devem estar em um diretório `/tests` ou `/__tests__`** seguindo a estrutura principal do aplicativo
+  - Incluir pelo menos:
+    - 1 teste para uso esperado
+    - 1 caso de borda
+    - 1 caso de falha
+
+## ✅ Conclusão de Tarefas
+
+- **Marcar tarefas concluídas em `TASK.md`** imediatamente após finalizá-las
+- **Adicionar novas subtarefas ou TODOs** descobertos durante o desenvolvimento ao `TASK.md` em uma seção "Descobertos Durante o Trabalho"
+- **Confirmar a conclusão** testando a funcionalidade em seu contexto de uso
+
+
+## 📚 Documentação e Explicabilidade
+
+- **Comentar código não óbvio** e garantir que tudo seja compreensível para um desenvolvedor de nível intermediário
+- **Ao escrever lógica complexa**, adicionar um comentário inline `// Razão:` explicando o porquê, não apenas o quê
+- **Documentar todos os módulos principais** com uma breve descrição de sua responsabilidade e como interagem com outros módulos
+
+## 🧠 Regras de Comportamento
+
+- **Nunca assumir contexto ausente. Fazer perguntas quando incerto**
+
+- **Sempre confirmar caminhos de arquivo e nomes de módulos** existentes antes de referenciá-los no código ou testes

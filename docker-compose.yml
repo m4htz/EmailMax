@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  validation-service:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - API_KEY=${API_KEY:-seu_token_secreto_aqui}
+    restart: unless-stopped
+    # Para desenvolvimento, descomente as linhas abaixo:
+    # volumes:
+    #   - .:/app
+    # command: ["python", "app.py"]
+    
+  # Proxy reverso para SSL/TLS (opcional, mas recomendado para produção)
+  # proxy:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/conf:/etc/nginx/conf.d
+  #     - ./nginx/ssl:/etc/nginx/ssl
+  #     - ./nginx/www:/var/www/html
+  #   depends_on:
+  #     - validation-service
+  #   restart: unless-stopped 

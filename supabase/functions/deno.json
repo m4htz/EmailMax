@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "lib": ["deno.window"],
+    "strict": true
+  },
+  "lint": {
+    "files": {
+      "include": ["**/*.ts"]
+    },
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": ["no-explicit-any"]
+    }
+  },
+  "fmt": {
+    "files": {
+      "include": ["**/*.ts"]
+    },
+    "options": {
+      "useTabs": false,
+      "lineWidth": 100,
+      "indentWidth": 2,
+      "singleQuote": false,
+      "proseWrap": "preserve"
+    }
+  },
+  "tasks": {
+    "deploy": "supabase functions deploy email-processor",
+    "serve": "supabase functions serve email-processor --no-verify-jwt"
+  },
+  "imports": {
+    "http/": "https://deno.land/std@0.177.0/http/",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+    "smtp": "https://deno.land/x/smtp@v0.7.0/mod.ts",
+    "imapflow": "https://esm.sh/imapflow@1.0.144"
+  }
+} 
