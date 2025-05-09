@@ -41,3 +41,4 @@ env/
 
 # Docker
 .docker/ 
+node_modules
