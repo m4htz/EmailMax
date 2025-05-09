@@ -25,8 +25,6 @@ Este documento rastreia as tarefas atuais, backlog, e subtarefas do projeto. Atu
   - ✅ Configurar PostgreSQL e definir políticas RLS básicas
   - ✅ Modelar tabelas iniciais (EmailAccounts, WarmupPlans, EmailTemplates)
   - ✅ Criar cliente Supabase com createClient (Next.js)
-  - ✅ Implementar Edge Functions para processamento email
-
 ### Próximos Passos Imediatos
 
 - ✅ Desenvolver migrações SQL para tabelas principais
@@ -34,7 +32,6 @@ Este documento rastreia as tarefas atuais, backlog, e subtarefas do projeto. Atu
   - ✅ Criar tabela `warmup_plans`
   - ✅ Criar tabela `warmup_metrics`
 
-- ✅ Configurar Edge Functions para processamento de email
   - ✅ Criar função para conexão IMAP
   - ✅ Implementar função para envio SMTP
   - ✅ Desenvolver funções para monitoramento de caixas de entrada
@@ -45,7 +42,6 @@ Este documento rastreia as tarefas atuais, backlog, e subtarefas do projeto. Atu
   - ✅ Criar interfaces para adicionar contas de email (App passwords)
   - ✅ Desenvolver método para armazenar credenciais no Supabase
   - 🔄 Implementar função de teste de conexão IMAP/SMTP
-    - ✅ Verificação básica via Edge Functions (limitada a DNS)
     - 🔄 Desenvolver microserviço Python para validação real de conexões
   - ✅ Criar mecanismo de atualização automática de tokens expirados
 

@@ -9,7 +9,11 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "validator:start": "node start-validator.js",
+    "validator:start-python": "node start-validator-python.js",
+    "dev:with-validator": "node start-validator.js && next dev",
+    "dev:with-python-validator": "node start-validator-python.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.12.0",

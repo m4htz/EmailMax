@@ -31,7 +31,6 @@ export interface TestConnectionResult {
     provider?: string;
     description?: string;
     connectionType?: string;
-    limitedTest?: boolean;
     serviceError?: boolean;
     netError?: boolean;
     microserviceUrl?: string;
@@ -41,8 +40,8 @@ export interface TestConnectionResult {
 }
 
 /**
- * Testa a conexão com uma conta de email usando credenciais fornecidas diretamente
- * usando o microserviço Python de validação IMAP/SMTP
+ * Testa a conexão com uma conta de email usando o microserviço Python de validação IMAP/SMTP.
+ * Não utiliza mais Edge Functions do Supabase que têm limitações de conexão com portas de email.
  */
 export async function testEmailConnection(credentials: EmailCredentials): Promise<TestConnectionResult> {
   if (!credentials) {
@@ -83,14 +82,14 @@ export async function testEmailConnection(credentials: EmailCredentials): Promis
     try {
       console.log("Chamando microserviço de validação IMAP/SMTP:", VALIDATION_SERVICE_URL);
       
-      // Verificar se o microserviço está configurado
-      if (!VALIDATION_SERVICE_URL || VALIDATION_SERVICE_URL === 'http://localhost:5000') {
-        console.warn("URL do microserviço não configurada ou usando valor padrão:", VALIDATION_SERVICE_URL);
+      // Verificar se o microserviço está configurado corretamente
+      if (!VALIDATION_SERVICE_URL) {
+        throw new Error('URL do microserviço de validação não configurada');
       }
       
       // Verificar se o microserviço está disponível com um timeout
       let fetchController = new AbortController();
-      const timeoutId = setTimeout(() => fetchController.abort(), 5000);
+      const timeoutId = setTimeout(() => fetchController.abort(), 8000); // Aumentado o timeout para 8 segundos
       
       try {
         const response = await fetch(`${VALIDATION_SERVICE_URL}/api/test-connection`, {
@@ -119,15 +118,9 @@ export async function testEmailConnection(credentials: EmailCredentials): Promis
           const errorText = await response.text();
           console.error(`Erro na chamada do microserviço (${response.status}):`, errorText);
           
-          // Se o erro for 404 ou 500, pode indicar problema com o microserviço
-          if (response.status === 404 || response.status >= 500) {
-            throw new Error(`Serviço de validação não disponível (${response.status}): ${errorText}`);
-          }
-          
-          // Para outros erros, retornar a mensagem específica
           return {
             success: false,
-            message: `Falha na conexão: ${errorText || 'Erro desconhecido'}`,
+            message: `Falha na conexão com o serviço de validação: ${errorText || 'Erro desconhecido'}`,
             details: {
               error: errorText,
               connectionType: 'error'
@@ -157,11 +150,26 @@ export async function testEmailConnection(credentials: EmailCredentials): Promis
           message: data.message,
           details: {
             ...data.details,
-            connectionType: 'real'  // Indicar que este é um teste real, não uma simulação
+            connectionType: 'real'  // Indicar que este é um teste real
           }
         };
         
         console.log("Resultado do teste de conexão via microserviço:", result);
+        
+        // Registrar o resultado no banco de dados Supabase (para histórico)
+        try {
+          const supabase = createClient();
+          await supabase.from('validation_logs').insert({
+            account_id: null, // Será preenchido posteriormente se a conta for salva
+            success: result.success,
+            message: result.message,
+            service: 'microservice'
+          });
+        } catch (logError) {
+          console.error("Erro ao registrar log de validação:", logError);
+          // Não impede o fluxo principal se o log falhar
+        }
+        
         return result;
         
       } catch (fetchError: any) {
@@ -177,7 +185,7 @@ export async function testEmailConnection(credentials: EmailCredentials): Promis
       
       // Tratar erros de rede específicos
       let errorMessage = 'Não foi possível conectar ao serviço de validação de email.';
-      let errorDetails = {
+      let errorDetails: TestConnectionResult['details'] = {
         error: serviceError.message || 'Erro na conexão com o serviço de validação',
         connectionType: 'error',
         serviceError: true,
@@ -194,7 +202,7 @@ export async function testEmailConnection(credentials: EmailCredentials): Promis
         errorDetails.netError = true;
       }
       
-      // Fornecer um feedback mais claro sobre o problema com o microserviço
+      // Fornecimento de mensagem de erro mais detalhada para o usuário
       return {
         success: false,
         message: errorMessage,
@@ -253,7 +261,7 @@ export async function testEmailConnectionWithStoredCredentials(
     }
     
     // 3. Testar a conexão usando as credenciais recuperadas
-    return await testEmailConnection({
+    const result = await testEmailConnection({
       email: account.email_address,
       password,
       imapHost: account.imap_host,
@@ -261,6 +269,21 @@ export async function testEmailConnectionWithStoredCredentials(
       smtpHost: account.smtp_host,
       smtpPort: account.smtp_port
     });
+    
+    // 4. Registrar o resultado no banco de dados
+    try {
+      await supabase.from('validation_logs').insert({
+        account_id: accountId,
+        success: result.success,
+        message: result.message,
+        service: 'microservice'
+      });
+    } catch (logError) {
+      console.error("Erro ao registrar log de validação:", logError);
+      // Não impede o fluxo principal se o log falhar
+    }
+    
+    return result;
   } catch (error: any) {
     console.error('Erro ao testar conexão com credenciais armazenadas:', error);
     return { 

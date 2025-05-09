@@ -128,6 +128,65 @@ export const AddAccountForm = () => {
     checkSupabaseConnection();
   }, [supabase]);
 
+  // Ao carregar o componente, verifica se o microserviço Python está disponível
+  useEffect(() => {
+    const checkMicroserviceAvailability = async () => {
+      try {
+        const serviceUrl = process.env.NEXT_PUBLIC_EMAIL_VALIDATION_SERVICE_URL || 'http://localhost:5000';
+        console.log("Verificando disponibilidade do microserviço:", serviceUrl);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        const response = await fetch(`${serviceUrl}/api/status`, {
+          signal: controller.signal,
+          headers: {
+            'Authorization': `Bearer ${process.env.EMAIL_VALIDATION_API_KEY || 'dev_key_change_me_in_production'}`
+          }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          console.log("Microserviço de validação está disponível");
+        } else {
+          console.warn("Microserviço de validação respondeu com erro:", response.status);
+          toast({
+            title: "Microserviço de validação indisponível",
+            description: (
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
+                <div>
+                  <p>O microserviço de validação IMAP/SMTP não está respondendo corretamente.</p>
+                  <p className="text-sm mt-1">Verifique se o serviço está em execução em <code className="bg-gray-100 px-1 rounded">{serviceUrl}</code></p>
+                </div>
+              </div>
+            ),
+            duration: 10000,
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao verificar disponibilidade do microserviço:", error);
+        toast({
+          title: "Microserviço de validação inacessível",
+          description: (
+            <div className="flex items-start gap-2">
+              <XCircle className="h-5 w-5 text-red-500 mt-0.5" />
+              <div>
+                <p>Não foi possível conectar ao microserviço de validação IMAP/SMTP.</p>
+                <p className="text-sm mt-1">Execute o microserviço Python usando Docker: <code className="bg-gray-100 px-1 rounded">cd imap-smtp-validator && docker-compose up -d</code></p>
+              </div>
+            </div>
+          ),
+          duration: 10000,
+        });
+      }
+    };
+    
+    // Executar a verificação do microserviço
+    checkMicroserviceAvailability();
+  }, [toast]);
+
   // Verificar se estamos em modo de desenvolvimento
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -142,8 +201,8 @@ export const AddAccountForm = () => {
               <div className="flex items-start gap-2">
                 <Info className="h-5 w-5 text-blue-500 mt-0.5" />
                 <div>
-                  <p>Microserviço de validação IMAP/SMTP não configurado.</p>
-                  <p className="text-sm mt-1">Configure a variável <code className="bg-gray-100 px-1 rounded">NEXT_PUBLIC_EMAIL_VALIDATION_SERVICE_URL</code> no arquivo <code className="bg-gray-100 px-1 rounded">.env.local</code> para utilizar o validador real.</p>
+                  <p>Utilizando microserviço de validação IMAP/SMTP no endereço padrão.</p>
+                  <p className="text-sm mt-1">Configure a variável <code className="bg-gray-100 px-1 rounded">NEXT_PUBLIC_EMAIL_VALIDATION_SERVICE_URL</code> no arquivo <code className="bg-gray-100 px-1 rounded">.env.local</code> se necessário.</p>
                 </div>
               </div>
             ),
@@ -210,6 +269,10 @@ export const AddAccountForm = () => {
       let password = values.appPassword;
       
       try {
+        // Verificar se o microserviço está disponível
+        const serviceUrl = process.env.NEXT_PUBLIC_EMAIL_VALIDATION_SERVICE_URL || 'http://localhost:5000';
+        console.log("Validando com microserviço Python em:", serviceUrl);
+        
         // Testar conexão usando o serviço de validação Python
         const result = await testEmailConnection({
           email: values.email,
@@ -227,7 +290,8 @@ export const AddAccountForm = () => {
             description: (
               <div className="space-y-2">
                 <p>O microserviço de validação IMAP/SMTP não está acessível.</p>
-                <p className="text-sm">Verifique se o microserviço Python está em execução na URL: {process.env.NEXT_PUBLIC_EMAIL_VALIDATION_SERVICE_URL || 'http://localhost:5000'}</p>
+                <p className="text-sm">Verifique se o microserviço Python está em execução na URL: <code className="bg-gray-100 px-1 rounded">{serviceUrl}</code></p>
+                <p className="text-xs mt-2">Certifique-se de que o Docker está instalado e execute: <code className="bg-gray-100 px-1 rounded">cd imap-smtp-validator && docker-compose up -d</code></p>
               </div>
             ),
             variant: "destructive",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useOAuthTokenRefresh } from '@/lib/utils/oauth-manager';
 import { createClient } from '@/lib/supabase/client';
 
@@ -14,45 +14,62 @@ interface OAuthRefreshProviderProps {
  */
 export function OAuthRefreshProvider({ children }: OAuthRefreshProviderProps) {
   const supabase = createClient();
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+  
+  // Usar o hook de atualização de tokens OAuth
+  const { refreshing, lastRefresh, error } = useOAuthTokenRefresh(userId);
 
+  // Efeito para obter o usuário atual e configurar o ID do usuário
   useEffect(() => {
-    // Obter o ID do usuário atual
-    let cleanupFunction = () => {};
-
-    const setupTokenRefresh = async () => {
+    const setupUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
         if (user) {
-          // Iniciar o monitoramento de tokens
-          cleanupFunction = useOAuthTokenRefresh(user.id);
+          setUserId(user.id);
         }
       } catch (error) {
-        console.error('Erro ao configurar renovação de tokens:', error);
+        console.error('Erro ao obter usuário atual:', error);
       }
     };
 
-    setupTokenRefresh();
+    setupUser();
 
     // Configurar listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        // Limpar qualquer monitoramento anterior
-        cleanupFunction();
-        // Configurar novo monitoramento para o usuário que acabou de entrar
-        cleanupFunction = useOAuthTokenRefresh(session.user.id);
+        // Atualizar o ID do usuário quando ele fizer login
+        setUserId(session.user.id);
       } else if (event === 'SIGNED_OUT') {
-        // Limpar monitoramento quando o usuário sair
-        cleanupFunction();
+        // Limpar o ID do usuário quando ele sair
+        setUserId(undefined);
       }
     });
 
     // Limpar ao desmontar
     return () => {
-      cleanupFunction();
       subscription.unsubscribe();
     };
   }, [supabase]);
+
+  // Registrar mensagens de debug (apenas em desenvolvimento)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      if (userId) {
+        console.log(`OAuthRefreshProvider: Monitorando tokens para usuário ${userId}`);
+        if (refreshing) {
+          console.log('OAuthRefreshProvider: Atualizando tokens...');
+        }
+        if (lastRefresh) {
+          console.log(`OAuthRefreshProvider: Última atualização em ${lastRefresh.toLocaleString()}`);
+        }
+        if (error) {
+          console.error('OAuthRefreshProvider: Erro na atualização:', error);
+        }
+      } else {
+        console.log('OAuthRefreshProvider: Nenhum usuário autenticado');
+      }
+    }
+  }, [userId, refreshing, lastRefresh, error]);
 
   // Renderizar apenas os filhos - este componente não tem UI
   return <>{children}</>;
